@@ -4,6 +4,7 @@ import java.util.Map;
 
 import com.vaadin.terminal.PaintException;
 import com.vaadin.terminal.PaintTarget;
+import com.vaadin.terminal.Resource;
 import com.vaadin.ui.AbstractField;
 
 /**
@@ -13,15 +14,34 @@ import com.vaadin.ui.AbstractField;
 @com.vaadin.ui.ClientWidget(org.vaadin.marcus.clearablesearchfield.client.ui.VClearableSearchField.class)
 public class ClearableSearchField extends AbstractField {
 
-    private String inputPrompt;
+    private String inputPrompt = "";
+    private String searchButtonCaption = "";
+    private String clearButtonCaption = "";
+    private Resource searchButtonIcon;
+    private Resource clearButtonIcon;
+
+    public ClearableSearchField(String searchButtonCaption,
+            String clearButtonCaption) {
+        this.searchButtonCaption = searchButtonCaption;
+        this.clearButtonCaption = clearButtonCaption;
+    }
 
     @Override
     public void paintContent(PaintTarget target) throws PaintException {
         super.paintContent(target);
 
         target.addVariable(this, "searchterm", (String) getValue());
-        if (inputPrompt != null) {
-            target.addAttribute("prompt", inputPrompt);
+
+        target.addAttribute("prompt", inputPrompt);
+        target.addAttribute("searchButtonCaption", searchButtonCaption);
+        target.addAttribute("clearButtonCaption", clearButtonCaption);
+
+        if (searchButtonIcon != null) {
+            target.addAttribute("searchButtonIcon", searchButtonIcon);
+        }
+
+        if (clearButtonIcon != null) {
+            target.addAttribute("clearButtonIcon", clearButtonIcon);
         }
     }
 
@@ -53,8 +73,43 @@ public class ClearableSearchField extends AbstractField {
         return (String) getValue();
     }
 
+    public String getSearchButtonCaption() {
+        return searchButtonCaption;
+    }
+
+    public void setSearchButtonCaption(String searchButtonCaption) {
+        this.searchButtonCaption = searchButtonCaption;
+    }
+
+    public String getClearButtonCaption() {
+        return clearButtonCaption;
+    }
+
+    public void setClearButtonCaption(String clearButtonCaption) {
+        this.clearButtonCaption = clearButtonCaption;
+    }
+
+    public Resource getSearchButtonIcon() {
+        return searchButtonIcon;
+    }
+
+    public void setSearchButtonIcon(Resource searchButtonIcon) {
+        this.searchButtonIcon = searchButtonIcon;
+    }
+
+    public Resource getClearButtonIcon() {
+        return clearButtonIcon;
+    }
+
+    public void setClearButtonIcon(Resource clearButtonIcon) {
+        this.clearButtonIcon = clearButtonIcon;
+    }
+
+    public String getInputPrompt() {
+        return inputPrompt;
+    }
+
     public void setInputPrompt(String prompt) {
         inputPrompt = prompt;
     }
-
 }

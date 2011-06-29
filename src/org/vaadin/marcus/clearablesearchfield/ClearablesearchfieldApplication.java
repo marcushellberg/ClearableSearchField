@@ -21,7 +21,8 @@ public class ClearablesearchfieldApplication extends Application {
 
         final Panel valueChanges = new Panel("ValueChanges");
 
-        final ClearableSearchField clearableSearchField = new ClearableSearchField();
+        final ClearableSearchField clearableSearchField = new ClearableSearchField(
+                "Search", "Clear");
         clearableSearchField.addListener(new ValueChangeListener() {
 
             private static final long serialVersionUID = 1L;
