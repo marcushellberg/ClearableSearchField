@@ -32,6 +32,7 @@ public class ClearablesearchfieldApplication extends Application {
             }
         });
         clearableSearchField.setCaption("Search");
+        clearableSearchField.setInputPrompt("Search..");
 
         mainWindow.addComponent(clearableSearchField);
         mainWindow.addComponent(valueChanges);
@@ -43,7 +44,7 @@ public class ClearablesearchfieldApplication extends Application {
 
             public void buttonClick(ClickEvent event) {
                 mainWindow.showNotification("Server value for search field",
-                        clearableSearchField.getSearchTerm());
+                        "\"" + clearableSearchField.getSearchTerm() + "\"");
             }
         });
 

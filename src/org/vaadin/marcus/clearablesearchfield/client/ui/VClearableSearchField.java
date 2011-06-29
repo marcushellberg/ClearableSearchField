@@ -2,16 +2,16 @@ package org.vaadin.marcus.clearablesearchfield.client.ui;
 
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
-import com.google.gwt.user.client.Event;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.vaadin.terminal.gwt.client.ApplicationConnection;
 import com.vaadin.terminal.gwt.client.Paintable;
 import com.vaadin.terminal.gwt.client.UIDL;
@@ -21,9 +21,8 @@ import com.vaadin.terminal.gwt.client.ui.Field;
  * Client side widget which communicates with the server. Messages from the
  * server are shown as HTML and mouse clicks are sent to the server.
  */
-public class VClearableSearchField extends HorizontalPanel implements
-        Paintable, ChangeHandler, Field, FocusHandler, BlurHandler,
-        ClickHandler {
+public class VClearableSearchField extends FlowPanel implements Paintable,
+        Field, FocusHandler, BlurHandler, ClickHandler {
 
     /** Set the CSS class name to allow styling. */
     public static final String CLASSNAME = "v-clearable-searchfield";
@@ -38,7 +37,25 @@ public class VClearableSearchField extends HorizontalPanel implements
 
     public static final String SEARCH_IDENTIFIER = "searchterm";
 
+    private static final int REVERT_DELAY = 200;
+
     private Button searchButton;
+
+    private VerticalPanel messagesPanel;
+
+    private String currentSearchTerm = "";
+
+    private boolean promptMode;
+
+    private ResetSearchTimer resetTimer;
+
+    private HandlerRegistration boxFocusRegistration;
+
+    private HandlerRegistration boxBlurRegistration;
+
+    private HandlerRegistration buttonFocusRegistration;
+
+    private HandlerRegistration buttonBlurRegistration;
 
     /**
      * The constructor should first call super() to initialize the component and
@@ -48,18 +65,25 @@ public class VClearableSearchField extends HorizontalPanel implements
 
         setStyleName(CLASSNAME);
 
-        sinkEvents(Event.FOCUSEVENTS);
-
         buildLayout();
     }
 
     private void buildLayout() {
+
         searchBox = new TextBox();
+        boxFocusRegistration = searchBox.addFocusHandler(this);
+        boxBlurRegistration = searchBox.addBlurHandler(this);
+
         searchButton = new Button();
+        buttonFocusRegistration = searchButton.addFocusHandler(this);
+        buttonBlurRegistration = searchButton.addBlurHandler(this);
         searchButton.addClickHandler(this);
+
+        messagesPanel = new VerticalPanel();
 
         add(searchBox);
         add(searchButton);
+        add(messagesPanel);
     }
 
     /**
@@ -83,35 +107,77 @@ public class VClearableSearchField extends HorizontalPanel implements
         paintableId = uidl.getId();
 
         if (uidl.hasAttribute("prompt")) {
-            searchBox.setValue(uidl.getStringAttribute("prompt"));
+            searchBox.setText(uidl.getStringAttribute("prompt"));
+            promptMode = true;
         }
 
         if (uidl.hasVariable(SEARCH_IDENTIFIER)) {
-            searchBox.setText(uidl.getStringVariable(SEARCH_IDENTIFIER));
-        } else {
-            searchBox.setValue("");
+            currentSearchTerm = uidl.getStringVariable(SEARCH_IDENTIFIER);
+            searchBox.setText(currentSearchTerm);
         }
 
-        searchButton.setText(uidl.getStringAttribute("caption"));
-    }
-
-    public void onBlur(BlurEvent event) {
-        // TODO Auto-generated method stub
-
+        searchButton.setHTML("<b>" + uidl.getStringAttribute("caption")
+                + "</b>");
     }
 
     public void onFocus(FocusEvent event) {
-        // TODO Auto-generated method stub
-
+        if (event.getSource().equals(searchBox)) {
+        } else if (event.getSource().equals(searchButton)) {
+            cancelResetTimer();
+        }
     }
 
-    public void onChange(ChangeEvent event) {
-        // TODO Auto-generated method stub
-
+    public void onBlur(BlurEvent event) {
+        if (event.getSource().equals(searchBox)) {
+            startResetTimer();
+        } else if (event.getSource().equals(searchButton)) {
+            startResetTimer();
+        }
     }
 
     public void onClick(ClickEvent event) {
+        cancelResetTimer();
+
+        currentSearchTerm = searchBox.getText();
         client.updateVariable(paintableId, SEARCH_IDENTIFIER,
                 searchBox.getText(), true);
+    }
+
+    private class ResetSearchTimer extends Timer {
+
+        @Override
+        public void run() {
+            searchBox.setText(currentSearchTerm);
+        }
+    }
+
+    private void startResetTimer() {
+        if (resetTimer != null) {
+            resetTimer.cancel();
+        }
+        resetTimer = new ResetSearchTimer();
+        resetTimer.schedule(REVERT_DELAY);
+    }
+
+    private void cancelResetTimer() {
+        if (resetTimer != null) {
+            resetTimer.cancel();
+            resetTimer = null;
+        }
+    }
+
+    @Override
+    protected void onDetach() {
+        if (resetTimer != null) {
+            resetTimer.cancel();
+            resetTimer = null;
+        }
+
+        boxBlurRegistration.removeHandler();
+        boxFocusRegistration.removeHandler();
+        buttonBlurRegistration.removeHandler();
+        buttonFocusRegistration.removeHandler();
+
+        super.onDetach();
     }
 }

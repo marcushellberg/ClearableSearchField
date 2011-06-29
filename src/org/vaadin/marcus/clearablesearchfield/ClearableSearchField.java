@@ -13,11 +13,16 @@ import com.vaadin.ui.AbstractField;
 @com.vaadin.ui.ClientWidget(org.vaadin.marcus.clearablesearchfield.client.ui.VClearableSearchField.class)
 public class ClearableSearchField extends AbstractField {
 
+    private String inputPrompt;
+
     @Override
     public void paintContent(PaintTarget target) throws PaintException {
         super.paintContent(target);
 
         target.addVariable(this, "searchterm", (String) getValue());
+        if (inputPrompt != null) {
+            target.addAttribute("prompt", inputPrompt);
+        }
     }
 
     @Override
@@ -35,16 +40,21 @@ public class ClearableSearchField extends AbstractField {
         super.changeVariables(source, variables);
 
         if (variables.containsKey("searchterm")) {
-            setInternalValue(variables.get("searchterm"));
+            setValue(variables.get("searchterm"));
         }
     }
 
     public void setSearchTerm(String searchTerm) {
-        setValue(searchTerm, true);
+        setInternalValue(searchTerm);
+        requestRepaint();
     }
 
     public String getSearchTerm() {
         return (String) getValue();
+    }
+
+    public void setInputPrompt(String prompt) {
+        inputPrompt = prompt;
     }
 
 }
