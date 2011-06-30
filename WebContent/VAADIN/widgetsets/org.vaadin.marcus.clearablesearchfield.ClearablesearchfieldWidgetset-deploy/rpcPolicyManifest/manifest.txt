@@ -1,2 +1,0 @@
-# Module org.vaadin.marcus.clearablesearchfield.ClearablesearchfieldWidgetset
-# RPC service class, partial path of RPC policy file

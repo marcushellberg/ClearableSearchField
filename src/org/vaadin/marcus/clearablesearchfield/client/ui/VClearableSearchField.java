@@ -33,8 +33,10 @@ public class VClearableSearchField extends FlowPanel implements Paintable,
 
     /** Set the CSS class name to allow styling. */
     public static final String CLASSNAME = "v-clearable-searchfield";
+    public static final String FOCUS_CLASSNAME = "focus";
+    public static final String PROMPT_CLASSNAME = "prompt";
     public static final String BUTTON_CLASSNAME = "search-button";
-    public static final String BOX_CLASSNAME = "search-box";
+    public static final String BOX_CLASSNAME = "search-field";
 
     public static final String SEARCH_IDENTIFIER = "searchterm";
     protected static final String CLEAR_BUTTON_STYLE = "clear";
@@ -46,13 +48,14 @@ public class VClearableSearchField extends FlowPanel implements Paintable,
     /** Reference to the server connection object. */
     protected ApplicationConnection client;
 
-    protected TextBox searchBox;
+    protected TextBox searchField;
     protected Button searchButton;
 
     protected String currentSearchTerm = "";
+    protected String inputPrompt = "";
+
     protected ResetSearchTimer resetTimer;
 
-    protected boolean promptMode;
     protected boolean buttonInClearMode;
 
     protected HandlerRegistration boxFocusRegistration;
@@ -62,13 +65,14 @@ public class VClearableSearchField extends FlowPanel implements Paintable,
     protected HandlerRegistration boxKeyDownRegistration;
     protected String searchButtonCaption = "";
     protected String clearButtonCaption = "";
-    protected String inputPrompt = "";
 
     // For button
     protected final Element buttonWrapper = DOM.createSpan();
     protected final Element buttonCaption = DOM.createSpan();
     protected Icon searchIcon;
     protected Icon clearIcon;
+    private boolean searchFieldFocused;
+    private boolean promptVisible;
 
     public VClearableSearchField() {
         super();
@@ -79,11 +83,11 @@ public class VClearableSearchField extends FlowPanel implements Paintable,
     }
 
     private void buildLayout() {
-        searchBox = new TextBox();
-        searchBox.setStyleName(BOX_CLASSNAME);
-        boxFocusRegistration = searchBox.addFocusHandler(this);
-        boxBlurRegistration = searchBox.addBlurHandler(this);
-        boxKeyDownRegistration = searchBox.addKeyDownHandler(this);
+        searchField = new TextBox();
+        searchField.setStyleName(BOX_CLASSNAME);
+        boxFocusRegistration = searchField.addFocusHandler(this);
+        boxBlurRegistration = searchField.addBlurHandler(this);
+        boxKeyDownRegistration = searchField.addKeyDownHandler(this);
 
         searchButton = new Button();
         searchButton.setStyleName(BUTTON_CLASSNAME);
@@ -98,7 +102,7 @@ public class VClearableSearchField extends FlowPanel implements Paintable,
         buttonWrapper.appendChild(buttonCaption);
         searchButton.getElement().appendChild(buttonWrapper);
 
-        add(searchBox);
+        add(searchField);
         add(searchButton);
     }
 
@@ -128,8 +132,9 @@ public class VClearableSearchField extends FlowPanel implements Paintable,
 
         if (uidl.hasVariable(SEARCH_IDENTIFIER)) {
             currentSearchTerm = uidl.getStringVariable(SEARCH_IDENTIFIER);
-            searchBox.setText(currentSearchTerm);
         }
+
+        setSearchFieldValue();
 
         searchButtonCaption = uidl.getStringAttribute("searchButtonCaption");
         clearButtonCaption = uidl.getStringAttribute("clearButtonCaption");
@@ -167,25 +172,49 @@ public class VClearableSearchField extends FlowPanel implements Paintable,
     }
 
     // Search box logic
+    private void setSearchFieldValue() {
+        if (shouldShowPrompt()) {
+            searchField.setValue(inputPrompt);
+            searchField.addStyleDependentName(PROMPT_CLASSNAME);
+            promptVisible = true;
+        } else {
+            searchField.setValue(currentSearchTerm);
+            searchField.removeStyleDependentName(PROMPT_CLASSNAME);
+            promptVisible = false;
+        }
+    }
+
+    private boolean shouldShowPrompt() {
+        return currentSearchTerm.isEmpty() && !searchFieldFocused;
+    }
+
+    private void hidePromptIfVisible() {
+        if (promptVisible) {
+            searchField.setText("");
+            searchField.removeStyleDependentName(PROMPT_CLASSNAME);
+            promptVisible = false;
+        }
+    }
+
     private void clearSearchBox() {
-        searchBox.setText("");
-        searchBox.setFocus(true);
+        searchField.setText("");
+        searchField.setFocus(true);
         setClearButton(false);
+
     }
 
     private void runSearch() {
-        currentSearchTerm = searchBox.getText();
-        searchBox.setFocus(false);
+        currentSearchTerm = searchField.getText();
+        searchField.setFocus(false);
         client.updateVariable(paintableId, SEARCH_IDENTIFIER,
-                searchBox.getText(), true);
+                searchField.getText(), true);
     }
 
     private void revertSearch() {
-        if (searchBox.getText().isEmpty()) {
+        if (searchField.getText().isEmpty()) {
             runSearch();
-        } else if (!currentSearchTerm.equals(searchBox.getText())) {
-            searchBox.setText(currentSearchTerm);
         }
+        setSearchFieldValue();
         setClearButton(false);
     }
 
@@ -210,24 +239,30 @@ public class VClearableSearchField extends FlowPanel implements Paintable,
             buttonInClearMode = false;
             searchButton.removeStyleName(CLEAR_BUTTON_STYLE);
         }
+
         updateButton();
     }
 
     // Event handling
     public void onFocus(FocusEvent event) {
-        if (event.getSource().equals(searchBox)) {
-            if (!searchBox.getText().isEmpty()) {
+        if (event.getSource().equals(searchField)) {
+            searchFieldFocused = true;
+            searchField.addStyleDependentName(FOCUS_CLASSNAME);
+
+            hidePromptIfVisible();
+            if (!searchField.getText().isEmpty()) {
                 setClearButton(true);
             }
-
         } else if (event.getSource().equals(searchButton)) {
             cancelResetTimer();
         }
     }
 
     public void onBlur(BlurEvent event) {
-        if (event.getSource().equals(searchBox)) {
+        if (event.getSource().equals(searchField)) {
             startResetTimer();
+            searchFieldFocused = false;
+            searchField.removeStyleDependentName(FOCUS_CLASSNAME);
         } else if (event.getSource().equals(searchButton)) {
             startResetTimer();
         }
@@ -244,8 +279,20 @@ public class VClearableSearchField extends FlowPanel implements Paintable,
     }
 
     public void onKeyDown(KeyDownEvent event) {
-        if (event.getSource().equals(searchBox)) {
-            if (buttonInClearMode) {
+        if (event.getSource().equals(searchField)) {
+            int keyCode = event.getNativeKeyCode();
+
+            // Do not change button with keys that do not modify content or
+            // cursor position (=user is not editing)
+            switch (keyCode) {
+            case KeyCodes.KEY_ALT:
+            case KeyCodes.KEY_CTRL:
+            case KeyCodes.KEY_DOWN:
+            case KeyCodes.KEY_ESCAPE:
+            case KeyCodes.KEY_SHIFT:
+            case KeyCodes.KEY_TAB:
+                break;
+            default:
                 setClearButton(false);
             }
         }

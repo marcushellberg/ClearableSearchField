@@ -36,13 +36,13 @@ public class ClearableSearchField extends AbstractField {
         target.addAttribute("searchButtonCaption", searchButtonCaption);
         target.addAttribute("clearButtonCaption", clearButtonCaption);
 
-        if (searchButtonIcon != null) {
-            target.addAttribute("searchButtonIcon", searchButtonIcon);
-        }
-
-        if (clearButtonIcon != null) {
-            target.addAttribute("clearButtonIcon", clearButtonIcon);
-        }
+        // if (searchButtonIcon != null) {
+        // target.addAttribute("searchButtonIcon", searchButtonIcon);
+        // }
+        //
+        // if (clearButtonIcon != null) {
+        // target.addAttribute("clearButtonIcon", clearButtonIcon);
+        // }
     }
 
     @Override
@@ -89,21 +89,21 @@ public class ClearableSearchField extends AbstractField {
         this.clearButtonCaption = clearButtonCaption;
     }
 
-    public Resource getSearchButtonIcon() {
-        return searchButtonIcon;
-    }
-
-    public void setSearchButtonIcon(Resource searchButtonIcon) {
-        this.searchButtonIcon = searchButtonIcon;
-    }
-
-    public Resource getClearButtonIcon() {
-        return clearButtonIcon;
-    }
-
-    public void setClearButtonIcon(Resource clearButtonIcon) {
-        this.clearButtonIcon = clearButtonIcon;
-    }
+    // public Resource getSearchButtonIcon() {
+    // return searchButtonIcon;
+    // }
+    //
+    // public void setSearchButtonIcon(Resource searchButtonIcon) {
+    // this.searchButtonIcon = searchButtonIcon;
+    // }
+    //
+    // public Resource getClearButtonIcon() {
+    // return clearButtonIcon;
+    // }
+    //
+    // public void setClearButtonIcon(Resource clearButtonIcon) {
+    // this.clearButtonIcon = clearButtonIcon;
+    // }
 
     public String getInputPrompt() {
         return inputPrompt;
