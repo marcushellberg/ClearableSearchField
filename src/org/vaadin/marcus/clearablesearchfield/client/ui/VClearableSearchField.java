@@ -148,6 +148,9 @@ public class VClearableSearchField extends FlowPanel implements Paintable,
             searchField.setValue(inputPrompt);
             searchField.addStyleDependentName(PROMPT_CLASSNAME);
             promptVisible = true;
+            // if prompt is visible, there is no search -> no need to show clear
+            // button
+            setClearButton(false);
         } else {
             searchField.setValue(currentSearchTerm);
             searchField.removeStyleDependentName(PROMPT_CLASSNAME);
@@ -252,7 +255,7 @@ public class VClearableSearchField extends FlowPanel implements Paintable,
     }
 
     public void onKeyPress(KeyPressEvent event) {
-        if (event.getCharCode() == KeyCodes.KEY_ENTER) {
+        if (event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ENTER) {
             runSearch();
         }
     }
