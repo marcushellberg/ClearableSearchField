@@ -8,11 +8,10 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Accessibility;
 import com.google.gwt.user.client.ui.Button;
@@ -29,7 +28,7 @@ import com.vaadin.terminal.gwt.client.ui.Icon;
  * server are shown as HTML and mouse clicks are sent to the server.
  */
 public class VClearableSearchField extends FlowPanel implements Paintable,
-        Field, FocusHandler, BlurHandler, KeyDownHandler, ClickHandler {
+        Field, FocusHandler, BlurHandler, ClickHandler, KeyPressHandler {
 
     /** Set the CSS class name to allow styling. */
     public static final String CLASSNAME = "v-clearable-searchfield";
@@ -62,7 +61,7 @@ public class VClearableSearchField extends FlowPanel implements Paintable,
     protected HandlerRegistration boxBlurRegistration;
     protected HandlerRegistration buttonFocusRegistration;
     protected HandlerRegistration buttonBlurRegistration;
-    protected HandlerRegistration boxKeyDownRegistration;
+
     protected String searchButtonCaption = "";
     protected String clearButtonCaption = "";
 
@@ -73,11 +72,11 @@ public class VClearableSearchField extends FlowPanel implements Paintable,
     protected Icon clearIcon;
     private boolean searchFieldFocused;
     private boolean promptVisible;
+    private HandlerRegistration keyPressRegistration;
 
     public VClearableSearchField() {
         super();
         setStyleName(CLASSNAME);
-        sinkEvents(Event.ONKEYDOWN);
 
         buildLayout();
     }
@@ -87,7 +86,7 @@ public class VClearableSearchField extends FlowPanel implements Paintable,
         searchField.setStyleName(BOX_CLASSNAME);
         boxFocusRegistration = searchField.addFocusHandler(this);
         boxBlurRegistration = searchField.addBlurHandler(this);
-        boxKeyDownRegistration = searchField.addKeyDownHandler(this);
+        keyPressRegistration = searchField.addKeyPressHandler(this);
 
         searchButton = new Button();
         searchButton.setStyleName(BUTTON_CLASSNAME);
@@ -139,34 +138,6 @@ public class VClearableSearchField extends FlowPanel implements Paintable,
         searchButtonCaption = uidl.getStringAttribute("searchButtonCaption");
         clearButtonCaption = uidl.getStringAttribute("clearButtonCaption");
 
-        // if (uidl.hasAttribute("searchButtonIcon")) {
-        // if (searchIcon == null) {
-        // searchIcon = new Icon(client);
-        // buttonWrapper.insertBefore(searchIcon.getElement(),
-        // buttonCaption);
-        // }
-        // searchIcon.setUri(uidl.getStringAttribute("searchButtonIcon"));
-        // } else {
-        // if (searchIcon != null) {
-        // buttonWrapper.removeChild(searchIcon.getElement());
-        // searchIcon = null;
-        // }
-        // }
-        //
-        // if (uidl.hasAttribute("clearButtonIcon")) {
-        // if (clearIcon == null) {
-        // clearIcon = new Icon(client);
-        //
-        // }
-        // clearIcon.setUri(uidl.getStringAttribute("searchButtonIcon"));
-        // } else {
-        // if (clearIcon != null) {
-        // buttonWrapper.removeChild(clearIcon.getElement());
-        // clearIcon = null;
-        // }
-        // }
-        //
-
         updateButton();
 
     }
@@ -198,14 +169,16 @@ public class VClearableSearchField extends FlowPanel implements Paintable,
 
     private void clearSearchBox() {
         searchField.setText("");
-        searchField.setFocus(true);
-        setClearButton(false);
-
+        runSearch();
+        setSearchFieldValue();
     }
 
     private void runSearch() {
         currentSearchTerm = searchField.getText();
         searchField.setFocus(false);
+        if (!currentSearchTerm.isEmpty()) {
+            setClearButton(true);
+        }
         client.updateVariable(paintableId, SEARCH_IDENTIFIER,
                 searchField.getText(), true);
     }
@@ -214,8 +187,10 @@ public class VClearableSearchField extends FlowPanel implements Paintable,
         if (searchField.getText().isEmpty()) {
             runSearch();
         }
+        if (!currentSearchTerm.isEmpty()) {
+            setClearButton(true);
+        }
         setSearchFieldValue();
-        setClearButton(false);
     }
 
     // Button methods
@@ -250,9 +225,7 @@ public class VClearableSearchField extends FlowPanel implements Paintable,
             searchField.addStyleDependentName(FOCUS_CLASSNAME);
 
             hidePromptIfVisible();
-            if (!searchField.getText().isEmpty()) {
-                setClearButton(true);
-            }
+            setClearButton(false);
         } else if (event.getSource().equals(searchButton)) {
             cancelResetTimer();
         }
@@ -278,34 +251,10 @@ public class VClearableSearchField extends FlowPanel implements Paintable,
         }
     }
 
-    public void onKeyDown(KeyDownEvent event) {
-        if (event.getSource().equals(searchField)) {
-            int keyCode = event.getNativeKeyCode();
-
-            // Do not change button with keys that do not modify content or
-            // cursor position (=user is not editing)
-            switch (keyCode) {
-            case KeyCodes.KEY_ALT:
-            case KeyCodes.KEY_CTRL:
-            case KeyCodes.KEY_DOWN:
-            case KeyCodes.KEY_ESCAPE:
-            case KeyCodes.KEY_SHIFT:
-            case KeyCodes.KEY_TAB:
-                break;
-            default:
-                setClearButton(false);
-            }
-        }
-    }
-
-    @Override
-    public void onBrowserEvent(com.google.gwt.user.client.Event event) {
-        if (DOM.eventGetType(event) == Event.ONKEYDOWN
-                && event.getKeyCode() == KeyCodes.KEY_ENTER) {
+    public void onKeyPress(KeyPressEvent event) {
+        if (event.getCharCode() == KeyCodes.KEY_ENTER) {
             runSearch();
         }
-
-        super.onBrowserEvent(event);
     }
 
     private class ResetSearchTimer extends Timer {
@@ -317,9 +266,9 @@ public class VClearableSearchField extends FlowPanel implements Paintable,
     }
 
     private void startResetTimer() {
-        if (resetTimer != null) {
-            resetTimer.cancel();
-        }
+        // We do not want two timers running at the same time at any point
+        cancelResetTimer();
+
         resetTimer = new ResetSearchTimer();
         resetTimer.schedule(REVERT_DELAY);
     }
@@ -342,7 +291,7 @@ public class VClearableSearchField extends FlowPanel implements Paintable,
         boxFocusRegistration.removeHandler();
         buttonBlurRegistration.removeHandler();
         buttonFocusRegistration.removeHandler();
-        boxKeyDownRegistration.removeHandler();
+        keyPressRegistration.removeHandler();
 
         super.onDetach();
     }

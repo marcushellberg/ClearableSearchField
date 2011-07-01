@@ -35,14 +35,6 @@ public class ClearableSearchField extends AbstractField {
         target.addAttribute("prompt", inputPrompt);
         target.addAttribute("searchButtonCaption", searchButtonCaption);
         target.addAttribute("clearButtonCaption", clearButtonCaption);
-
-        // if (searchButtonIcon != null) {
-        // target.addAttribute("searchButtonIcon", searchButtonIcon);
-        // }
-        //
-        // if (clearButtonIcon != null) {
-        // target.addAttribute("clearButtonIcon", clearButtonIcon);
-        // }
     }
 
     @Override
@@ -88,22 +80,6 @@ public class ClearableSearchField extends AbstractField {
     public void setClearButtonCaption(String clearButtonCaption) {
         this.clearButtonCaption = clearButtonCaption;
     }
-
-    // public Resource getSearchButtonIcon() {
-    // return searchButtonIcon;
-    // }
-    //
-    // public void setSearchButtonIcon(Resource searchButtonIcon) {
-    // this.searchButtonIcon = searchButtonIcon;
-    // }
-    //
-    // public Resource getClearButtonIcon() {
-    // return clearButtonIcon;
-    // }
-    //
-    // public void setClearButtonIcon(Resource clearButtonIcon) {
-    // this.clearButtonIcon = clearButtonIcon;
-    // }
 
     public String getInputPrompt() {
         return inputPrompt;
