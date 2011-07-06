@@ -1,8 +1,8 @@
 Manifest-Version: 1.0
 Implementation-Title: ClearableSearchField
-Implementation-Version: 0.3.2
+Implementation-Version: 0.3.5
 Vaadin-Package-Version: 1
+Class-Path: 
 Vaadin-Widgetsets: org.vaadin.marcus.clearablesearchfield.Clearablesea
  rchfieldWidgetset
-Class-Path: 
 

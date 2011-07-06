@@ -34,6 +34,8 @@ public class VClearableSearchField extends FlowPanel implements Paintable,
     public static final String CLASSNAME = "v-clearable-searchfield";
     public static final String FOCUS_CLASSNAME = "focus";
     public static final String PROMPT_CLASSNAME = "prompt";
+    public static final String ACTIVE_CLASSNAME = "active";
+
     public static final String BUTTON_CLASSNAME = "search-button";
     public static final String BOX_CLASSNAME = "search-field";
 
@@ -147,6 +149,7 @@ public class VClearableSearchField extends FlowPanel implements Paintable,
         if (shouldShowPrompt()) {
             searchField.setValue(inputPrompt);
             searchField.addStyleDependentName(PROMPT_CLASSNAME);
+            removeStyleDependentName(ACTIVE_CLASSNAME);
             promptVisible = true;
             // if prompt is visible, there is no search -> no need to show clear
             // button
@@ -154,6 +157,7 @@ public class VClearableSearchField extends FlowPanel implements Paintable,
         } else {
             searchField.setValue(currentSearchTerm);
             searchField.removeStyleDependentName(PROMPT_CLASSNAME);
+            addStyleDependentName(ACTIVE_CLASSNAME);
             promptVisible = false;
         }
     }
@@ -250,7 +254,11 @@ public class VClearableSearchField extends FlowPanel implements Paintable,
         if (buttonInClearMode) {
             clearSearchBox();
         } else {
-            runSearch();
+            // it's possible for users to press the search button even with the
+            // prompt visible, do not trigger a search for these
+            if (!promptVisible) {
+                runSearch();
+            }
         }
     }
 
