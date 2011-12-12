@@ -34,6 +34,7 @@ public class ClearablesearchfieldApplication extends Application {
 
         final ClearableSearchField clearableSearchField = new ClearableSearchField(
                 "Filter", "Clear");
+        clearableSearchField.setInputPrompt("Filter by first name..");
 
         clearableSearchField.addListener(new ValueChangeListener() {
 
@@ -43,7 +44,6 @@ public class ClearablesearchfieldApplication extends Application {
                 filterFirstNameBy((String) event.getProperty().getValue());
             }
         });
-        clearableSearchField.setInputPrompt("Filter by first name..");
 
         personTable = new Table();
         personTable.setContainerDataSource(getContainer());
